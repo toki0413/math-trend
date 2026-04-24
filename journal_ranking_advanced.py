@@ -536,7 +536,7 @@ class JournalRankingEngine:
 
 - 分析脚本: `journal_ranking_advanced.py`
 - 生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M")}
-- 数据版本: v2.0（基于真实608篇数据）
+- 数据版本: 基于真实608篇数据
 - 数学模型: 5维加权综合评分
 
 ---

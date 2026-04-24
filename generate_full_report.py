@@ -504,7 +504,7 @@ def generate_full_report():
 
 - 分析脚本: `generate_full_report.py`
 - 生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M")}
-- 数据版本: v1.0
+- 数据版本: 基于真实608篇数据
 
 ---
 

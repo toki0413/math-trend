@@ -228,7 +228,7 @@ class MathTrendAdvancedCLI:
             icon = "✅" if status == 'completed' else "⚠️"
             module_rows.append(f"| {name} | {icon} {status} |")
 
-        report = f"""# Math-Trend 完整综合分析报告（v4.0）
+        report = f"""# Math-Trend 完整综合分析报告
 
 **生成时间**: {datetime.now().strftime("%Y-%m-%d %H:%M")}
 **数据基础**: {len(self.loader.all_papers if self.loader else [])}篇多源论文
@@ -375,10 +375,10 @@ class MathTrendAdvancedCLI:
 
 ---
 
-## 6. 技术架构（v4.0完整版）
+## 6. 技术架构
 
 ```
-Math-Trend 系统架构 v4.0
+Math-Trend 系统架构
 ├── 数据层
 │   ├── 多源数据加载 (OpenAlex/CrossRef/Semantic Scholar)
 │   ├── 置信度分层 (高/中/低)
@@ -431,12 +431,12 @@ Math-Trend 系统架构 v4.0
 
 - 分析脚本: math_trend_advanced_cli.py
 - 生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M")}
-- 数据版本: v4.0（含全部13个模块）
+- 数据版本: 含全部13个模块
 - 模块完成度: {completed}/{total}
 
 ---
 
-*本报告由 Math-Trend 高级分析系统 v4.0 生成*
+*本报告由 Math-Trend 高级分析系统生成*
 *包含3个基础模块、4个v1高级模块、6个v2最新模块的综合分析*
 """
 
@@ -453,7 +453,7 @@ Math-Trend 系统架构 v4.0
     def run_full_analysis(self):
         """运行完整分析（基础+v1高级+v2最新+可操作洞察）"""
         print("\n" + "█" * 80)
-        print("█" + " Math-Trend 完整分析 v5.0 ".center(76) + "█")
+        print("█" + " Math-Trend 完整分析 ".center(76) + "█")
         print("█" + " 13个模块 + 可操作洞察 ".center(76) + "█")
         print("█" * 80)
 
@@ -502,7 +502,7 @@ Math-Trend 系统架构 v4.0
 
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(description='Math-Trend 高级研究趋势分析工具 v4.0')
+    parser = argparse.ArgumentParser(description='Math-Trend 高级研究趋势分析工具')
     parser.add_argument('--full', action='store_true', help='运行完整分析（13个模块）')
     parser.add_argument('--basic', action='store_true', help='仅运行基础模块（3个）')
     parser.add_argument('--advanced-v1', action='store_true', help='运行基础+v1高级（7个）')

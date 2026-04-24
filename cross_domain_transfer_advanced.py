@@ -652,7 +652,7 @@ class CrossDomainTransferAdvanced:
 
 - 分析脚本: `cross_domain_transfer_advanced.py`
 - 生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M")}
-- 数据版本: v2.0（基于真实数据）
+- 数据版本: 基于真实数据
 
 ---
 
