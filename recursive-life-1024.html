@@ -302,6 +302,22 @@ body{
   border-color:rgba(255,107,107,.55);
   background:var(--red-soft);
 }
+.frame.is-loop{
+  border-color:rgba(242,184,75,.42);
+  background:linear-gradient(90deg,var(--amber-soft),transparent 62%),var(--panel3);
+}
+.frame.is-loop .fname u{color:var(--amber)}
+.frame .loop{
+  font-size:9.5px;letter-spacing:.06em;color:var(--amber);
+  border:1px solid rgba(242,184,75,.45);background:var(--amber-soft);
+  padding:1px 7px;border-radius:999px;
+}
+.frame.is-pop .loop{animation:loopBreak .4s ease-out both}
+@keyframes loopBreak{
+  0%{transform:rotate(0) scale(1);opacity:1}
+  55%{transform:rotate(90deg) scale(1.3);opacity:.9}
+  100%{transform:rotate(180deg) scale(.55);opacity:.3}
+}
 .frame.is-enter{animation:pushIn .42s cubic-bezier(.2,.9,.25,1.1) both}
 .frame.is-pop{animation:popOut .4s ease-in both}
 .frame.is-evict{animation:evictOut .4s ease-in both}
@@ -516,19 +532,20 @@ body{
 (function(){
   "use strict";
 
-  /* ---------- 人生的每一段 ---------- */
-  var AGES = [0, 6, 14, 22, 30, 45, 70];
-  var STAGE_NAME = {0:"出生", 6:"童年", 14:"少年", 22:"青年", 30:"而立", 45:"中年", 70:"老年"};
-  var LEGACY = {
-    0:"你好，世界。",
-    6:"世界原来是甜的。",
-    14:"第一次相信不可能的事。",
-    22:"走了很远，才知道要去哪。",
-    30:"把热爱过成谋生。",
-    45:"学会取舍，也学会承担。",
-    70:"慢下来，也是一种抵达。"
+  /* ---------- 异化的四重结构（关系上的 β₁ 环） ---------- */
+  var RINGS = [
+    {id:1, name:"产品异化",   note:"你造出的东西，不属于你"},
+    {id:2, name:"过程异化",   note:"劳动不是自愿，而是强制"},
+    {id:3, name:"类本质异化", note:"你不再从劳动里认出自己"},
+    {id:4, name:"人同人异化", note:"人与人之间，彼此疏远"}
+  ];
+  var AWAKE = {                /* 卸下环后，重新拿回的东西 */
+    1:"收回我造出的东西",
+    2:"让劳动重新属于我",
+    3:"在劳动里重新认出我",
+    4:"把人与人的关系，还给人与人"
   };
-  var BASE_RET = "把时间还给时间。";
+  var BASE_RET = "一切社会关系的总和。";
 
   var MAX_VISIBLE = 9;          // 栈面板能同时显示的帧数
   var OVERFLOW_PUSHES = 20;     // 无终止条件时压入的帧数
@@ -547,6 +564,7 @@ body{
   var retHint = document.getElementById("retHint");
   var cDepth = document.getElementById("cDepth");
   var cMem = document.getElementById("cMem");
+  var cRings = document.getElementById("cRings");
   var btnRun = document.getElementById("btnRun");
   var btnStep = document.getElementById("btnStep");
   var btnToggle = document.getElementById("btnToggle");
@@ -579,6 +597,7 @@ body{
   function updateCounters(){
     cDepth.textContent = String(totalPushed);
     cMem.textContent = totalPushed + " KB";
+    cRings.textContent = (mode === "nocase") ? "∞" : String(frames.length);
   }
 
   function updateSp(){
@@ -592,45 +611,48 @@ body{
     frames = [];
     totalPushed = 0;
     poem = [];
-    rets.innerHTML = '<div class="empty">每一次 <b style="color:var(--green)">return</b> 都会落回这里。<br>当调用栈开始回退，这一生会被倒着读一遍。</div>';
+    rets.innerHTML = '<div class="empty">每一次 <b style="color:var(--green)">return</b>，都卸下一重异化。<br>当环数归零，人回到一切社会关系的总和。</div>';
     setActiveLines([]);
     updateCounters();
     updateSp();
     tower.classList.remove("shake");
     stackHint.textContent = "等待调用";
-    retHint.textContent = "返回栈";
+    retHint.textContent = "扬弃栈";
     statusRight.className = "hint";
-    statusRight.textContent = "1 帧 ≈ 1 KB · 真实 V8 引擎约 8192 帧";
+    statusRight.textContent = "1 帧 ≈ 1 KB · 异化 = β₁ 环 · 卸下即扬弃";
   }
 
   /* ---------- frame ops ---------- */
-  function makeFrame(age){
+  function makeFrame(ring){
     var el = document.createElement("div");
-    el.className = "frame is-enter";
+    el.className = "frame is-enter is-loop";
     var addr = ADDR_TOP - totalPushed * ADDR_STEP;
+    var badge = '<span class="loop">β₁</span>';
 
-    if (age === null){
-      var n = 86 + totalPushed * 6;
+    if (ring === null){
+      var n = 5 + totalPushed;
       el.classList.add("is-danger");
       el.innerHTML =
-        '<span class="left"><span class="fname">life(<u>' + n + '</u>)</span>' +
-        '<span class="stage">拒绝终止</span></span>' +
-        '<span class="right"><span class="addr">' + hex(addr) + '</span>' +
+        '<span class="left"><span class="fname">环 <u>' + n + '</u></span>' +
+        '<span class="stage">拒绝扬弃</span></span>' +
+        '<span class="right">' + badge +
+        '<span class="addr">' + hex(addr) + '</span>' +
         '<span class="kb">1 KB</span></span>';
     } else {
       el.innerHTML =
-        '<span class="left"><span class="fname">life(<u>' + age + '</u>)</span>' +
-        '<span class="stage">' + STAGE_NAME[age] + '</span></span>' +
-        '<span class="right"><span class="addr">' + hex(addr) + '</span>' +
+        '<span class="left"><span class="fname">环 <u>' + ring.id + '</u></span>' +
+        '<span class="stage">' + ring.name + '</span></span>' +
+        '<span class="right">' + badge +
+        '<span class="addr">' + hex(addr) + '</span>' +
         '<span class="kb">1 KB</span></span>';
     }
     return el;
   }
 
-  function pushFrame(age){
-    var el = makeFrame(age);
+  function pushFrame(ring){
+    var el = makeFrame(ring);
     tower.insertBefore(el, sp);
-    frames.push({age:age, el:el});
+    frames.push({ring:ring, el:el});
     totalPushed++;
     updateCounters();
     updateSp();
@@ -651,11 +673,11 @@ body{
   }
 
   /* ---------- returns ---------- */
-  function addReturn(age, isBase){
+  function addReturn(ring, isBase){
     var head = isBase
-      ? '<div class="rhead"><b>终止条件</b> · age &gt;= 80</div>'
-      : '<div class="rhead"><b>' + STAGE_NAME[age] + '</b> · life(' + age + ') · return</div>';
-    var body = isBase ? BASE_RET : LEGACY[age];
+      ? '<div class="rhead"><b>终止条件</b> · 关系.环数() === 0</div>'
+      : '<div class="rhead"><b>扬弃</b> · 环 ' + ring.id + ' · ' + ring.name + '</div>';
+    var body = isBase ? BASE_RET : AWAKE[ring.id];
 
     var card = document.createElement("div");
     card.className = "ret" + (isBase ? " ret-base" : "");
@@ -674,19 +696,19 @@ body{
     var box = document.createElement("div");
     box.className = "poem";
     box.innerHTML =
-      '<div class="plabel">life(0) ==</div>' +
+      '<div class="plabel">人(我, 四重环) ==</div>' +
       lines +
-      '<div class="retNote">返回顺序是倒着的，我们把这一生正过来读。</div>';
+      '<div class="retNote">四重环卸下，人回到一切社会关系的总和。</div>';
     rets.appendChild(box);
     if (retBody) requestAnimationFrame(function(){ retBody.scrollTop = retBody.scrollHeight; });
   }
 
   /* ---------- actions ---------- */
-  function actPush(age){
-    pushFrame(age);
+  function actPush(ring){
+    pushFrame(ring);
     markActive();
-    setActiveLines([5, 6]);
-    setStatus("调用 life(" + age + ") · 压入一帧，占用 1 KB");
+    setActiveLines([6, 7]);
+    setStatus("进入第 " + ring.id + " 重异化 · " + ring.name + " —— " + ring.note);
     stackHint.textContent = "深度 " + totalPushed;
   }
 
@@ -694,19 +716,19 @@ body{
     if (frames.length >= MAX_VISIBLE) evictOldest();
     pushFrame(null);
     markActive();
-    setActiveLines([5, 6]);
-    setStatus("life 再也停不下来 · 栈深度 " + totalPushed + "，最老的日子被挤出去了");
+    setActiveLines([6, 7]);
+    setStatus("环再也卸不下来 · 栈深度 " + totalPushed + "，最重的异化被挤出去了");
     stackHint.textContent = "深度 " + totalPushed;
   }
 
   function actBase(){
     var top = frames[frames.length - 1];
     if (top){ top.el.classList.remove("is-active"); top.el.classList.add("is-base"); }
-    setActiveLines([2, 3]);
+    setActiveLines([10, 11]);
     addReturn(0, true);
-    setStatus("命中终止条件 · 开始逐帧返回");
-    stackHint.textContent = "深度 " + frames.length + " · 命中终止";
-    retHint.textContent = "倒叙返回";
+    setStatus("命中终止条件 · 关系.环数() === 0，开始扬弃异化");
+    stackHint.textContent = "深度 " + frames.length + " · 触底扬弃";
+    retHint.textContent = "扬弃 · 倒叙返回";
   }
 
   function actPop(){
@@ -717,30 +739,30 @@ body{
     f.el.classList.add("is-pop");
     (function(el){ setTimeout(function(){ el.remove(); }, 400); })(f.el);
     markActive();
-    addReturn(f.age, false);
+    addReturn(f.ring, false);
     updateCounters();
     updateSp();
-    setActiveLines([7]);
-    setStatus("返回 · 弹出 life(" + f.age + ")，带回「" + LEGACY[f.age] + "」");
+    setActiveLines([14]);
+    setStatus("扬弃 · 卸下环 " + f.ring.id + "（" + f.ring.name + "），带回「" + AWAKE[f.ring.id] + "」");
     stackHint.textContent = "深度 " + frames.length;
   }
 
   function actDone(){
-    setActiveLines([7]);
+    setActiveLines([11]);
     showPoem();
-    setStatus("life(0) 已返回 · 这一生读完了");
+    setStatus("人已返回 · 一切社会关系的总和");
     stackHint.textContent = "已清空";
-    retHint.textContent = "life(0) 的返回值";
+    retHint.textContent = "人(我, 四重环) 的返回值";
     statusRight.className = "";
-    statusRight.innerHTML = '栈已归零 · 7 帧，7 KB';
+    statusRight.innerHTML = '环数归零 · 4 重异化已扬弃';
   }
 
   function actError(){
     tower.classList.add("shake");
     var top = frames[frames.length - 1];
     if (top) top.el.classList.add("is-danger");
-    setActiveLines([6]);
-    setStatus("没有终止条件的递归，就是没有尽头的一生");
+    setActiveLines([14]);
+    setStatus("无法扬弃的异化，就是没有尽头的一生");
     stackHint.textContent = "栈溢出";
     statusRight.className = "errRibbon";
     statusRight.textContent = "RangeError: Maximum call stack size exceeded";
@@ -751,9 +773,9 @@ body{
   /* ---------- queue ---------- */
   function buildNormalQueue(){
     var ops = [];
-    for (var i = 0; i < AGES.length; i++) ops.push({t:"push", age:AGES[i]});
+    for (var i = 0; i < RINGS.length; i++) ops.push({t:"push", ring:RINGS[i]});
     ops.push({t:"base"});
-    for (var j = AGES.length - 1; j >= 0; j--) ops.push({t:"pop"});
+    for (var j = RINGS.length - 1; j >= 0; j--) ops.push({t:"pop"});
     ops.push({t:"done"});
     return ops;
   }
@@ -767,7 +789,7 @@ body{
 
   function doStep(op){
     switch(op.t){
-      case "push":  actPush(op.age); break;
+      case "push":  actPush(op.ring); break;
       case "gpush": actGPush(); break;
       case "base":  actBase(); break;
       case "pop":   actPop(); break;
@@ -826,7 +848,7 @@ body{
     queue = [];
     qi = 0;
     clearStage();
-    setStatus("就绪 · life(0) 尚未调用");
+    setStatus("就绪 · 人(我, 四重环) 尚未调用");
     updateControls();
   }
 
@@ -836,14 +858,14 @@ body{
     btnRun.disabled = playing;
     btnRun.innerHTML = playing
       ? '<span class="ic">❚❚</span>运行中…'
-      : '<span class="ic">▶</span>运行 life(0)';
+      : '<span class="ic">▶</span>运行 人()';
   }
 
   function setMode(next){
     mode = next;
     var condLines = [
-      codeEl.querySelector('.ln[data-line="2"]'),
-      codeEl.querySelector('.ln[data-line="3"]')
+      codeEl.querySelector('.ln[data-line="10"]'),
+      codeEl.querySelector('.ln[data-line="11"]')
     ];
     var on = (mode === "nocase");
     btnToggle.classList.toggle("on", on);
@@ -873,7 +895,7 @@ body{
   });
 
   // 首次进入，高亮起点
-  setActiveLines([10]);
+  setActiveLines([17]);
   updateCounters();
 })();
 </script>
