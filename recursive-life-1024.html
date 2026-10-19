@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>递归一生 · 人是一切社会关系的总和 — 1024 程序员节</title>
-<meta name="description" content="人的本质不是单个人所固有的抽象物，在其现实性上，它是一切社会关系的总和。异化是关系上的 β₁ 环，卸下即扬弃。">
+<title>递归一生 · life() — 1024 程序员节</title>
+<meta name="description" content="人生就是一次函数调用。压栈、递归、命中终止条件、逐帧返回。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
@@ -64,7 +64,7 @@ body{
   height:100%;
   min-height:0;
   display:grid;
-  grid-template-rows:auto auto minmax(0,1fr) auto;
+  grid-template-rows:auto auto auto minmax(0,1fr) auto;
   background:linear-gradient(180deg,rgba(255,255,255,.02),transparent 22%),var(--panel);
   border:1px solid var(--line2);
   border-radius:14px;
@@ -168,6 +168,32 @@ body{
 }
 .counters span i{font-style:normal;color:var(--dim);margin-right:5px}
 .counters b{color:var(--ink);font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}
+
+/* ---------- attention strip ---------- */
+.attn{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:9px 16px;border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.014);
+}
+.ahead{display:flex;flex-direction:column;gap:1px;flex:0 0 auto}
+.alabel{font-size:10.5px;letter-spacing:.18em;color:var(--blue)}
+.asub{font-size:10px;color:var(--faint)}
+.arows{display:flex;align-items:center;gap:16px;flex:1 1 auto;flex-wrap:wrap}
+.agroup{display:flex;align-items:center;gap:9px;min-width:150px}
+.agroup .aname{font-family:var(--serif);font-size:13px;color:var(--dim);flex:0 0 32px}
+.agroup .atrack{position:relative;flex:1 1 56px;height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+.agroup .afill{
+  position:absolute;top:0;left:0;bottom:0;width:0;border-radius:3px;
+  background:linear-gradient(90deg,rgba(143,184,255,.35),var(--blue));
+  transition:width .5s cubic-bezier(.2,.9,.25,1.05),background .2s ease;
+}
+.agroup .aval{font-size:11px;color:var(--faint);flex:0 0 34px;text-align:right;font-variant-numeric:tabular-nums}
+.agroup.is-top .aname{color:var(--ink)}
+.agroup.is-top .afill{background:linear-gradient(90deg,rgba(63,224,138,.45),#5CEFA0)}
+.agroup.is-top .aval{color:var(--ink)}
+.agroup.is-masked{opacity:.32}
+.agroup.is-masked .afill{background:rgba(255,255,255,.1)}
+.anote{flex:0 0 auto;max-width:230px;font-size:11px;line-height:1.55;color:var(--faint);text-align:right}
 
 /* ---------- stage ---------- */
 .stage{
@@ -439,6 +465,9 @@ body{
   .crumb{display:none}
   .counters{margin-left:0;flex-basis:100%}
   .frame .addr{display:none}
+  .attn{padding:8px 12px;gap:10px}
+  .agroup{min-width:44%}
+  .anote{max-width:none;text-align:left;flex-basis:100%;order:3}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
@@ -452,49 +481,50 @@ body{
     <div class="titlebar">
       <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
       <div class="brand">递归一生</div>
-      <div class="crumb"><b>~/life/man.js</b> · 递归发生在关系层，不在自我内部</div>
+      <div class="crumb"><b>~/life/life.js</b> · 一次函数调用，就是一生</div>
       <div class="tag">1024 · 程序员节</div>
     </div>
 
     <div class="toolbar">
-      <button class="btn primary" id="btnRun"><span class="ic">▶</span>运行 人()</button>
+      <button class="btn primary" id="btnRun"><span class="ic">▶</span>运行 life()</button>
       <button class="btn" id="btnStep"><span class="ic">⤵</span>单步</button>
       <button class="btn toggle" id="btnToggle"><span class="ic">⊘</span>移除终止条件</button>
       <button class="btn" id="btnReset"><span class="ic">↺</span>重置</button>
       <div class="counters">
         <span><i>栈深度</i><b id="cDepth">0</b></span>
         <span><i>栈内存</i><b id="cMem">0 KB</b></span>
-        <span><i>异化环</i><b id="cRings">0</b></span>
       </div>
+    </div>
+
+    <div class="attn" aria-label="注意力分布">
+      <div class="ahead" title="Q＝此刻的我，K＝每一层关系，V＝它交回的；匹配度决定权重">
+        <span class="alabel">ATTENTION</span>
+        <span class="asub">softmax(q·kᵀ / √d)</span>
+      </div>
+      <div class="arows" id="arows"></div>
+      <div class="anote" id="anote" title="注意力没有内在顺序——四层关系的先后，是外部注入的">权重只说明看向哪里，不说明为什么。</div>
     </div>
 
     <div class="stage">
 
       <section class="panel source" aria-label="源代码">
-        <div class="phead"><span>SOURCE</span><em>man.js</em></div>
+        <div class="phead"><span>SOURCE</span><em>life.js</em></div>
         <div class="pbody nopad">
           <div class="code" id="code">
-            <div class="ln" data-line="1"><span class="no">1</span><span class="code"><span class="c">/* 人的本质不是单个人所固有的抽象物，</span></span></div>
-            <div class="ln" data-line="2"><span class="no">2</span><span class="code"><span class="c">   在其现实性上，它是一切社会关系的总和 */</span></span></div>
-            <div class="ln" data-line="3"><span class="no">3</span><span class="code"> </span></div>
-            <div class="ln" data-line="4"><span class="no">4</span><span class="code"><span class="k">function</span> <span class="fn">人</span>(我, 关系) {</span></div>
-            <div class="ln" data-line="5"><span class="no">5</span><span class="code">  <span class="c">// β₁ 环：异化的四重结构</span></span></div>
-            <div class="ln" data-line="6"><span class="no">6</span><span class="code">  <span class="k">for</span> (<span class="k">const</span> 环 <span class="k">of</span> 关系.环)</span></div>
-            <div class="ln" data-line="7"><span class="no">7</span><span class="code">    <span class="k">if</span> (环.在位) 我 = 环.<span class="fn">作用</span>(我);</span></div>
-            <div class="ln" data-line="8"><span class="no">8</span><span class="code"> </span></div>
-            <div class="ln" data-line="9"><span class="no">9</span><span class="code">  <span class="c">// 终止条件：环都卸下 ⇒ 扬弃异化</span></span></div>
-            <div class="ln" data-line="10"><span class="no">10</span><span class="code">  <span class="k">if</span> (关系.<span class="fn">环数</span>() === <span class="n">0</span>)</span></div>
-            <div class="ln" data-line="11"><span class="no">11</span><span class="code">    <span class="k">return</span> [我, ...一切社会关系的总和];</span></div>
-            <div class="ln" data-line="12"><span class="no">12</span><span class="code"> </span></div>
-            <div class="ln" data-line="13"><span class="no">13</span><span class="code">  <span class="c">// 递归发生在关系层，不在自我内部</span></span></div>
-            <div class="ln" data-line="14"><span class="no">14</span><span class="code">  <span class="k">return</span> <span class="fn">人</span>(我, 关系.<span class="fn">卸下最外层环</span>());</span></div>
-            <div class="ln" data-line="15"><span class="no">15</span><span class="code">}</span></div>
-            <div class="ln" data-line="16"><span class="no">16</span><span class="code"> </span></div>
-            <div class="ln" data-line="17"><span class="no">17</span><span class="code"><span class="fn">人</span>(我, 四重环); <span class="c">// 从这里开始</span></span></div>
+            <div class="ln" data-line="1"><span class="no">1</span><span class="code"><span class="k">function</span> <span class="fn">life</span>(me, relations) {</span></div>
+            <div class="ln" data-line="2"><span class="no">2</span><span class="code">  <span class="k">const</span> [r, ...rest] = relations;</span></div>
+            <div class="ln" data-line="3"><span class="no">3</span><span class="code">  <span class="k">if</span> (!r) <span class="c">// 关系都安顿好了</span></span></div>
+            <div class="ln" data-line="4"><span class="no">4</span><span class="code">    <span class="k">return</span> [me];</span></div>
+            <div class="ln" data-line="5"><span class="no">5</span><span class="code"> </span></div>
+            <div class="ln" data-line="6"><span class="no">6</span><span class="code">  <span class="k">const</span> deeper = <span class="fn">life</span>(r.<span class="fn">meets</span>(me), rest);</span></div>
+            <div class="ln" data-line="7"><span class="no">7</span><span class="code">  <span class="k">return</span> [r.<span class="fn">keeps</span>(me), ...deeper]; <span class="c">// 这一层，还给自己</span></span></div>
+            <div class="ln" data-line="8"><span class="no">8</span><span class="code">}</span></div>
+            <div class="ln" data-line="9"><span class="no">9</span><span class="code"> </span></div>
+            <div class="ln" data-line="10"><span class="no">10</span><span class="code"><span class="fn">life</span>(me, relations); <span class="c">// 从这里开始</span></span></div>
           </div>
           <div class="codeNote">
-            异化 = 关系上的 <b>β₁ 环</b>：<b>产品 · 过程 · 类本质 · 人同人</b>——<br>
-            你造的、你做的，都不再属于你。四重环卸下、环数归零，递归才终止：<b>扬弃</b>。
+            一帧栈空间约 <b>1 KB</b>，默认栈约 <b>8 MB</b>——<br>
+            所以真实引擎里，递归深度大约是 <b>8192</b> 帧。
           </div>
         </div>
       </section>
@@ -503,7 +533,7 @@ body{
         <div class="phead"><span>CALL STACK</span><em id="stackHint">等待调用</em></div>
         <div class="pbody nopad">
           <div class="tower" id="tower">
-            <div class="baseline">栈底 · 人(我, 四重环)</div>
+            <div class="baseline">栈底 · life(me, relations)</div>
             <div class="sp" id="sp" style="display:none"><span class="bar"></span>SP · 栈顶</div>
           </div>
         </div>
@@ -513,7 +543,7 @@ body{
         <div class="phead"><span>RETURN VALUES</span><em id="retHint">返回栈</em></div>
         <div class="pbody">
           <div class="rets" id="rets">
-            <div class="empty">每一次 <b style="color:var(--green)">return</b>，都卸下一重异化。<br>当环数归零，人回到一切社会关系的总和。</div>
+            <div class="empty">每一次 <b style="color:var(--green)">return</b> 都会落回这里。<br>当调用栈开始回退，这一生会被倒着读一遍。</div>
           </div>
         </div>
       </section>
@@ -521,8 +551,8 @@ body{
     </div>
 
     <div class="statusbar">
-      <span id="statusText">就绪 · 人(我, 四重环) 尚未调用</span>
-      <span id="statusRight" class="hint">1 帧 ≈ 1 KB · 异化 = β₁ 环 · 卸下即扬弃</span>
+      <span id="statusText">就绪 · life(me, relations) 尚未调用</span>
+      <span id="statusRight" class="hint">1 帧 ≈ 1 KB · 真实 V8 引擎约 8192 帧</span>
     </div>
 
   </div>
@@ -532,20 +562,20 @@ body{
 (function(){
   "use strict";
 
-  /* ---------- 异化的四重结构（关系上的 β₁ 环） ---------- */
+  /* ---------- 一个人绕不开的四层关系 ---------- */
   var RINGS = [
-    {id:1, name:"产品异化",   note:"你造出的东西，不属于你"},
-    {id:2, name:"过程异化",   note:"劳动不是自愿，而是强制"},
-    {id:3, name:"类本质异化", note:"你不再从劳动里认出自己"},
-    {id:4, name:"人同人异化", note:"人与人之间，彼此疏远"}
+    {id:1, stage:"署名",   note:"第一次上线，署名不是你"},
+    {id:2, stage:"夜晚",   note:"凌晨两点，为别人的排期醒着"},
+    {id:3, stage:"解释",   note:"你不再解释，为什么写它"},
+    {id:4, stage:"同伴",   note:"同桌的人，成了竞品"}
   ];
-  var AWAKE = {                /* 卸下环后，重新拿回的东西 */
-    1:"收回我造出的东西",
-    2:"让劳动重新属于我",
-    3:"在劳动里重新认出我",
-    4:"把人与人的关系，还给人与人"
+  var AWAKE = {                /* 卸下一层，重新拿回的东西 */
+    1:"这一次，署我的名字",
+    2:"把夜晚还给自己",
+    3:"重新想起，为什么写它",
+    4:"先做同事，再谈输赢"
   };
-  var BASE_RET = "一切社会关系的总和。";
+  var BASE_RET = "我，由他们构成。";
 
   var MAX_VISIBLE = 9;          // 栈面板能同时显示的帧数
   var OVERFLOW_PUSHES = 20;     // 无终止条件时压入的帧数
@@ -564,11 +594,12 @@ body{
   var retHint = document.getElementById("retHint");
   var cDepth = document.getElementById("cDepth");
   var cMem = document.getElementById("cMem");
-  var cRings = document.getElementById("cRings");
   var btnRun = document.getElementById("btnRun");
   var btnStep = document.getElementById("btnStep");
   var btnToggle = document.getElementById("btnToggle");
   var btnReset = document.getElementById("btnReset");
+  var arows = document.getElementById("arows");
+  var anote = document.getElementById("anote");
 
   /* ---------- state ---------- */
   var frames = [];        // 自栈底到栈顶：{age, el}
@@ -597,12 +628,84 @@ body{
   function updateCounters(){
     cDepth.textContent = String(totalPushed);
     cMem.textContent = totalPushed + " KB";
-    cRings.textContent = (mode === "nocase") ? "∞" : String(frames.length);
   }
 
   function updateSp(){
     if (frames.length === 0){ sp.style.display = "none"; }
     else { sp.style.display = "flex"; }
+  }
+
+  /* ---------- attention ---------- */
+  var ATTN_NAMES = ["署名","夜晚","解释","同伴"];
+  var attnEls = [];
+  var ATTN_NOTE = "权重只说明看向哪里，不说明为什么。";
+
+  function buildAttn(){
+    arows.innerHTML = "";
+    attnEls = [];
+    for (var i = 0; i < 4; i++){
+      var g = document.createElement("div");
+      g.className = "agroup";
+      g.innerHTML =
+        '<span class="aname">' + ATTN_NAMES[i] + '</span>' +
+        '<span class="atrack"><span class="afill"></span></span>' +
+        '<span class="aval">0.00</span>';
+      arows.appendChild(g);
+      attnEls.push({root:g, fill:g.querySelector(".afill"), val:g.querySelector(".aval")});
+    }
+  }
+
+  function softmax(scores){
+    var m = Math.max.apply(null, scores);
+    var ex = scores.map(function(s){ return Math.exp(s - m); });
+    var sum = ex.reduce(function(a,b){ return a + b; }, 0);
+    return ex.map(function(e){ return e / sum; });
+  }
+
+  // depth = 已压入的关系层数；每一层重新算一次，不是固定向量
+  function attnWeights(depth){
+    var out = [0,0,0,0];
+    var remaining = 4 - depth;
+    if (remaining <= 0) return out;      // 全部安顿——注意力收敛到无
+    var scores = [];
+    for (var i = 0; i < remaining; i++) scores.push(remaining - i);
+    var w = softmax(scores);
+    for (var j = 0; j < remaining; j++) out[depth + j] = w[j];
+    return out;
+  }
+
+  function paintAttn(weights, note){
+    var top = -1, topW = 0, sum = 0;
+    for (var i = 0; i < 4; i++){
+      var wi = weights[i];
+      var el = attnEls[i];
+      el.fill.style.width = (wi * 100).toFixed(1) + "%";
+      el.val.textContent = wi.toFixed(2);
+      el.root.classList.toggle("is-masked", wi <= 0.001);
+      if (wi > topW){ topW = wi; top = i; }
+      sum += wi;
+    }
+    for (var j = 0; j < 4; j++){
+      attnEls[j].root.classList.toggle("is-top", j === top && sum > 0.999 && topW < 1);
+    }
+    if (note) anote.textContent = note;
+  }
+
+  function renderAttnIdle(){
+    paintAttn([0.25,0.25,0.25,0.25], ATTN_NOTE);
+    for (var i = 0; i < 4; i++) attnEls[i].root.classList.remove("is-top");
+  }
+
+  function renderAttn(depth){
+    if (mode === "nocase"){
+      paintAttn([0.25,0.25,0.25,0.25], "无终止条件：权重永不收敛。");
+      return;
+    }
+    if (depth >= 4){
+      paintAttn([0,0,0,0], "关系都安顿好了——不再有待关注的对象。");
+      return;
+    }
+    paintAttn(attnWeights(depth), ATTN_NOTE);
   }
 
   function clearStage(){
@@ -611,15 +714,16 @@ body{
     frames = [];
     totalPushed = 0;
     poem = [];
-    rets.innerHTML = '<div class="empty">每一次 <b style="color:var(--green)">return</b>，都卸下一重异化。<br>当环数归零，人回到一切社会关系的总和。</div>';
+    rets.innerHTML = '<div class="empty">每一次 <b style="color:var(--green)">return</b> 都会落回这里。<br>当调用栈开始回退，这一生会被倒着读一遍。</div>';
     setActiveLines([]);
     updateCounters();
     updateSp();
+    renderAttnIdle();
     tower.classList.remove("shake");
     stackHint.textContent = "等待调用";
-    retHint.textContent = "扬弃栈";
+    retHint.textContent = "返回栈";
     statusRight.className = "hint";
-    statusRight.textContent = "1 帧 ≈ 1 KB · 异化 = β₁ 环 · 卸下即扬弃";
+    statusRight.textContent = "1 帧 ≈ 1 KB · 真实 V8 引擎约 8192 帧";
   }
 
   /* ---------- frame ops ---------- */
@@ -627,21 +731,21 @@ body{
     var el = document.createElement("div");
     el.className = "frame is-enter is-loop";
     var addr = ADDR_TOP - totalPushed * ADDR_STEP;
-    var badge = '<span class="loop">β₁</span>';
+    var badge = '<span class="loop">↻</span>';
 
     if (ring === null){
       var n = 5 + totalPushed;
       el.classList.add("is-danger");
       el.innerHTML =
-        '<span class="left"><span class="fname">环 <u>' + n + '</u></span>' +
-        '<span class="stage">拒绝扬弃</span></span>' +
+        '<span class="left"><span class="fname">relations[<u>' + n + '</u>]</span>' +
+        '<span class="stage">拒绝终止</span></span>' +
         '<span class="right">' + badge +
         '<span class="addr">' + hex(addr) + '</span>' +
         '<span class="kb">1 KB</span></span>';
     } else {
       el.innerHTML =
-        '<span class="left"><span class="fname">环 <u>' + ring.id + '</u></span>' +
-        '<span class="stage">' + ring.name + '</span></span>' +
+        '<span class="left"><span class="fname">relations[<u>' + ring.id + '</u>]</span>' +
+        '<span class="stage">' + ring.stage + '</span></span>' +
         '<span class="right">' + badge +
         '<span class="addr">' + hex(addr) + '</span>' +
         '<span class="kb">1 KB</span></span>';
@@ -675,8 +779,8 @@ body{
   /* ---------- returns ---------- */
   function addReturn(ring, isBase){
     var head = isBase
-      ? '<div class="rhead"><b>终止条件</b> · 关系.环数() === 0</div>'
-      : '<div class="rhead"><b>扬弃</b> · 环 ' + ring.id + ' · ' + ring.name + '</div>';
+      ? '<div class="rhead"><b>终止条件</b> · relations.length === 0</div>'
+      : '<div class="rhead"><b>卸下一层</b> · ' + ring.stage + '</div>';
     var body = isBase ? BASE_RET : AWAKE[ring.id];
 
     var card = document.createElement("div");
@@ -696,9 +800,9 @@ body{
     var box = document.createElement("div");
     box.className = "poem";
     box.innerHTML =
-      '<div class="plabel">人(我, 四重环) ==</div>' +
+      '<div class="plabel">life(me, relations) ==</div>' +
       lines +
-      '<div class="retNote">四重环卸下，人回到一切社会关系的总和。</div>';
+      '<div class="retNote">返回值是倒着的，我们把它正过来读。</div>';
     rets.appendChild(box);
     if (retBody) requestAnimationFrame(function(){ retBody.scrollTop = retBody.scrollHeight; });
   }
@@ -707,8 +811,9 @@ body{
   function actPush(ring){
     pushFrame(ring);
     markActive();
-    setActiveLines([6, 7]);
-    setStatus("进入第 " + ring.id + " 重异化 · " + ring.name + " —— " + ring.note);
+    setActiveLines([2, 6]);
+    renderAttn(frames.length);
+    setStatus("压入一层关系 · " + ring.stage + " —— " + ring.note);
     stackHint.textContent = "深度 " + totalPushed;
   }
 
@@ -716,19 +821,21 @@ body{
     if (frames.length >= MAX_VISIBLE) evictOldest();
     pushFrame(null);
     markActive();
-    setActiveLines([6, 7]);
-    setStatus("环再也卸不下来 · 栈深度 " + totalPushed + "，最重的异化被挤出去了");
+    setActiveLines([2, 6]);
+    renderAttn(0);
+    setStatus("停不下来了 · 栈深度 " + totalPushed + "，最早的被挤出去");
     stackHint.textContent = "深度 " + totalPushed;
   }
 
   function actBase(){
     var top = frames[frames.length - 1];
     if (top){ top.el.classList.remove("is-active"); top.el.classList.add("is-base"); }
-    setActiveLines([10, 11]);
+    setActiveLines([3, 4]);
     addReturn(0, true);
-    setStatus("命中终止条件 · 关系.环数() === 0，开始扬弃异化");
-    stackHint.textContent = "深度 " + frames.length + " · 触底扬弃";
-    retHint.textContent = "扬弃 · 倒叙返回";
+    renderAttn(4);
+    setStatus("关系都安顿好了 · 开始返回");
+    stackHint.textContent = "深度 " + frames.length + " · 触底";
+    retHint.textContent = "倒叙返回";
   }
 
   function actPop(){
@@ -742,27 +849,30 @@ body{
     addReturn(f.ring, false);
     updateCounters();
     updateSp();
-    setActiveLines([14]);
-    setStatus("扬弃 · 卸下环 " + f.ring.id + "（" + f.ring.name + "），带回「" + AWAKE[f.ring.id] + "」");
+    renderAttn(frames.length);
+    setActiveLines([7]);
+    setStatus("卸下一层 · " + f.ring.stage + "，带回「" + AWAKE[f.ring.id] + "」");
     stackHint.textContent = "深度 " + frames.length;
   }
 
   function actDone(){
-    setActiveLines([11]);
+    setActiveLines([7]);
     showPoem();
-    setStatus("人已返回 · 一切社会关系的总和");
+    renderAttn(4);
+    setStatus("life 已返回 · 这一生读完了");
     stackHint.textContent = "已清空";
-    retHint.textContent = "人(我, 四重环) 的返回值";
+    retHint.textContent = "life(me, relations) 的返回值";
     statusRight.className = "";
-    statusRight.innerHTML = '环数归零 · 4 重异化已扬弃';
+    statusRight.innerHTML = '栈已归零 · 4 层关系，4 KB';
   }
 
   function actError(){
     tower.classList.add("shake");
     var top = frames[frames.length - 1];
     if (top) top.el.classList.add("is-danger");
-    setActiveLines([14]);
-    setStatus("无法扬弃的异化，就是没有尽头的一生");
+    setActiveLines([6]);
+    renderAttn(0);
+    setStatus("没有终止条件的递归，就是没有尽头的一生");
     stackHint.textContent = "栈溢出";
     statusRight.className = "errRibbon";
     statusRight.textContent = "RangeError: Maximum call stack size exceeded";
@@ -848,7 +958,7 @@ body{
     queue = [];
     qi = 0;
     clearStage();
-    setStatus("就绪 · 人(我, 四重环) 尚未调用");
+    setStatus("就绪 · life(me, relations) 尚未调用");
     updateControls();
   }
 
@@ -858,14 +968,14 @@ body{
     btnRun.disabled = playing;
     btnRun.innerHTML = playing
       ? '<span class="ic">❚❚</span>运行中…'
-      : '<span class="ic">▶</span>运行 人()';
+      : '<span class="ic">▶</span>运行 life()';
   }
 
   function setMode(next){
     mode = next;
     var condLines = [
-      codeEl.querySelector('.ln[data-line="10"]'),
-      codeEl.querySelector('.ln[data-line="11"]')
+      codeEl.querySelector('.ln[data-line="3"]'),
+      codeEl.querySelector('.ln[data-line="4"]')
     ];
     var on = (mode === "nocase");
     btnToggle.classList.toggle("on", on);
@@ -895,7 +1005,9 @@ body{
   });
 
   // 首次进入，高亮起点
-  setActiveLines([17]);
+  buildAttn();
+  renderAttnIdle();
+  setActiveLines([10]);
   updateCounters();
 })();
 </script>
