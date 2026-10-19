@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>递归一生 · life() — 1024 程序员节</title>
+<meta name="description" content="人生就是一次函数调用。压栈、递归、命中终止条件、逐帧返回。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+
+:root{
+  --bg:#0A0B0D;
+  --panel:#101217;
+  --panel2:#141820;
+  --panel3:#1A1F28;
+  --line:rgba(255,255,255,.07);
+  --line2:rgba(255,255,255,.14);
+  --ink:#E9EBEF;
+  --dim:#98A0AB;
+  --faint:#5C626C;
+  --green:#3FE08A;
+  --green-soft:rgba(63,224,138,.10);
+  --amber:#F2B84B;
+  --amber-soft:rgba(242,184,75,.10);
+  --red:#FF6B6B;
+  --red-soft:rgba(255,107,107,.10);
+  --blue:#8FB8FF;
+  --serif:"Noto Serif SC","Songti SC","STSong",Georgia,serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+
+html,body{height:100%}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:13px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(1100px 560px at 18% -12%, rgba(63,224,138,.07), transparent 62%),
+    radial-gradient(900px 520px at 104% -6%, rgba(143,184,255,.06), transparent 60%),
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;
+  background-attachment:fixed;
+}
+
+.wrap{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  padding:20px;
+}
+
+.window{
+  width:100%;
+  max-width:1440px;
+  height:100%;
+  min-height:0;
+  display:grid;
+  grid-template-rows:auto auto minmax(0,1fr) auto;
+  background:linear-gradient(180deg,rgba(255,255,255,.02),transparent 22%),var(--panel);
+  border:1px solid var(--line2);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 40px 120px -40px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.4);
+}
+
+/* ---------- title bar ---------- */
+.titlebar{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:12px;
+  padding:11px 16px;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.015);
+}
+.dots{display:flex;gap:7px}
+.dot{width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.35)}
+.dot.r{background:#E0655B}
+.dot.y{background:#D8A93F}
+.dot.g{background:#4CA85E}
+.brand{
+  font-family:var(--serif);
+  font-weight:600;
+  font-size:16px;
+  letter-spacing:.04em;
+  color:var(--ink);
+  white-space:nowrap;
+}
+.crumb{
+  color:var(--faint);
+  font-size:12px;
+  flex:1 1 auto;
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.crumb b{color:var(--dim);font-weight:400}
+.tag{
+  margin-left:auto;
+  font-size:11px;
+  letter-spacing:.16em;
+  color:var(--green);
+  border:1px solid rgba(63,224,138,.35);
+  background:var(--green-soft);
+  padding:3px 10px;
+  border-radius:999px;
+  white-space:nowrap;
+}
+
+/* ---------- toolbar ---------- */
+.toolbar{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:9px;
+  padding:11px 16px;
+  border-bottom:1px solid var(--line);
+}
+.btn{
+  appearance:none;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  border:1px solid var(--line2);
+  background:var(--panel3);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:12px;
+  padding:7px 14px;
+  border-radius:7px;
+  cursor:pointer;
+  transition:background .14s ease,border-color .14s ease,color .14s ease,transform .14s ease;
+}
+.btn .ic{font-size:11px;opacity:.85}
+.btn:hover{border-color:rgba(63,224,138,.6);color:#fff;background:#20262F}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.38;cursor:not-allowed;transform:none}
+.btn.primary{
+  background:var(--green);
+  border-color:var(--green);
+  color:#04140C;
+  font-weight:600;
+}
+.btn.primary:hover{background:#5CEFA0;border-color:#5CEFA0;color:#04140C}
+.btn.toggle.on{
+  border-color:rgba(255,107,107,.6);
+  background:var(--red-soft);
+  color:var(--red);
+}
+.counters{
+  margin-left:auto;
+  display:flex;
+  gap:18px;
+  align-items:baseline;
+  font-size:11px;
+  color:var(--faint);
+  letter-spacing:.04em;
+}
+.counters span i{font-style:normal;color:var(--dim);margin-right:5px}
+.counters b{color:var(--ink);font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}
+
+/* ---------- stage ---------- */
+.stage{
+  display:grid;
+  grid-template-columns:minmax(320px,390px) minmax(0,1.4fr) minmax(260px,340px);
+  gap:12px;
+  padding:12px;
+  min-height:0;
+}
+.panel{
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  min-height:0;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+.phead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:9px 12px;
+  border-bottom:1px solid var(--line);
+  font-size:10.5px;
+  letter-spacing:.18em;
+  color:var(--faint);
+}
+.phead em{font-style:normal;color:var(--dim);letter-spacing:.04em}
+.pbody{padding:12px;overflow:auto;min-height:0}
+.pbody.nopad{padding:8px 6px}
+
+/* ---------- source ---------- */
+.code{font-size:12.5px;line-height:1.85}
+.ln{display:flex;gap:12px;padding:3px 8px;border-radius:6px;white-space:pre}
+.ln .no{
+  width:18px;flex:0 0 18px;text-align:right;color:var(--faint);
+  user-select:none;-webkit-user-select:none;
+}
+.ln .code{color:var(--dim)}
+.ln .k{color:#A9A6F0}
+.ln .fn{color:var(--green)}
+.ln .n{color:var(--amber)}
+.ln .c{color:var(--faint);font-style:italic}
+.ln.active{background:var(--green-soft);box-shadow:inset 2px 0 0 var(--green)}
+.ln.active .code,.ln.active .code .k,.ln.active .code .fn,.ln.active .code .n{color:#fff}
+.ln.active .code .c{color:rgba(63,224,138,.85);font-style:italic}
+.ln.disabled{opacity:.5;background:var(--red-soft);box-shadow:inset 2px 0 0 var(--red)}
+.ln.disabled .code{text-decoration:line-through;text-decoration-color:rgba(255,107,107,.7)}
+.codeNote{
+  margin-top:14px;padding:10px 12px;border-left:2px solid var(--line2);
+  color:var(--faint);font-size:11.5px;line-height:1.8;
+}
+.codeNote b{color:var(--dim);font-weight:500}
+
+/* ---------- call stack ---------- */
+.tower{
+  display:flex;
+  flex-direction:column-reverse;
+  justify-content:flex-start;
+  gap:5px;
+  height:100%;
+  min-height:300px;
+  padding:10px;
+}
+.baseline{
+  flex:0 0 auto;
+  border-top:1px dashed var(--line2);
+  padding-top:6px;
+  font-size:10px;
+  letter-spacing:.12em;
+  color:var(--faint);
+  text-align:center;
+}
+.sp{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  height:20px;
+  font-size:10px;
+  letter-spacing:.16em;
+  color:var(--green);
+  padding-left:4px;
+}
+.sp .bar{width:16px;height:1px;background:var(--green);opacity:.7}
+.frame{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  height:42px;
+  padding:0 12px;
+  border:1px solid var(--line2);
+  border-radius:8px;
+  background:var(--panel3);
+  transition:border-color .2s ease,background .2s ease,box-shadow .2s ease;
+}
+.frame .left{display:flex;align-items:baseline;gap:10px;min-width:0}
+.frame .fname{color:var(--dim);font-size:12.5px;white-space:nowrap}
+.frame .fname u{text-decoration:none;color:var(--amber)}
+.frame .stage{
+  font-family:var(--serif);
+  font-size:15px;
+  font-weight:600;
+  color:var(--ink);
+  letter-spacing:.06em;
+}
+.frame .right{display:flex;align-items:baseline;gap:12px;flex:0 0 auto}
+.frame .addr{color:var(--faint);font-size:10.5px;letter-spacing:.02em}
+.frame .kb{color:var(--faint);font-size:10.5px}
+.frame .flag{
+  font-size:9.5px;letter-spacing:.12em;color:var(--amber);
+  border:1px solid rgba(242,184,75,.4);background:var(--amber-soft);
+  padding:1px 7px;border-radius:999px;
+}
+.frame.is-active{
+  border-color:var(--green);
+  background:var(--green-soft);
+  box-shadow:0 0 0 1px rgba(63,224,138,.25),0 8px 26px -14px rgba(63,224,138,.7);
+}
+.frame.is-active .fname{color:var(--green)}
+.frame.is-active .stage{color:#fff}
+.frame.is-base{
+  border-color:var(--amber);
+  background:var(--amber-soft);
+  box-shadow:0 0 0 1px rgba(242,184,75,.25);
+}
+.frame.is-danger{
+  border-color:rgba(255,107,107,.55);
+  background:var(--red-soft);
+}
+.frame.is-enter{animation:pushIn .42s cubic-bezier(.2,.9,.25,1.1) both}
+.frame.is-pop{animation:popOut .4s ease-in both}
+.frame.is-evict{animation:evictOut .4s ease-in both}
+
+@keyframes pushIn{
+  from{opacity:0;transform:translateY(16px) scale(.94)}
+  to{opacity:1;transform:none}
+}
+@keyframes popOut{
+  to{opacity:0;transform:translateX(-14px) scale(.94)}
+}
+@keyframes evictOut{
+  to{opacity:0;transform:translateY(14px) scale(.9)}
+}
+
+.tower.shake{animation:shake .5s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{
+  10%,90%{transform:translateX(-2px)}
+  20%,80%{transform:translateX(3px)}
+  30%,50%,70%{transform:translateX(-5px)}
+  40%,60%{transform:translateX(5px)}
+}
+
+/* ---------- returns ---------- */
+.rets{display:flex;flex-direction:column;gap:8px}
+.empty{
+  color:var(--faint);
+  font-family:var(--serif);
+  font-size:13px;
+  line-height:2;
+  padding:8px 4px;
+}
+.ret{
+  border:1px solid var(--line);
+  border-left:2px solid var(--green);
+  border-radius:8px;
+  padding:9px 12px;
+  background:var(--panel3);
+  animation:retIn .42s cubic-bezier(.2,.9,.25,1.05) both;
+}
+@keyframes retIn{
+  from{opacity:0;transform:translateX(16px)}
+  to{opacity:1;transform:none}
+}
+.ret .rhead{
+  display:flex;align-items:baseline;gap:9px;
+  font-size:10.5px;color:var(--faint);letter-spacing:.1em;
+}
+.ret .rhead b{color:var(--dim);font-weight:400}
+.ret .rbody{
+  font-family:var(--serif);
+  font-size:14px;
+  color:var(--ink);
+  margin-top:3px;
+}
+.ret.ret-base{border-left-color:var(--amber)}
+.poem{
+  margin-top:14px;
+  padding:14px 16px;
+  border:1px solid rgba(63,224,138,.32);
+  border-radius:10px;
+  background:var(--green-soft);
+  animation:retIn .5s ease both;
+}
+.poem .plabel{
+  font-size:10.5px;letter-spacing:.18em;color:var(--green);margin-bottom:10px;
+}
+.poem .pline{
+  font-family:var(--serif);
+  font-size:15px;
+  line-height:2.05;
+  color:#F2FBF6;
+}
+.poem .pline:last-child{color:var(--green)}
+.retNote{margin-top:10px;font-size:11px;color:var(--faint);line-height:1.8}
+
+/* ---------- status bar ---------- */
+.statusbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:7px 16px;
+  border-top:1px solid var(--line);
+  font-size:11px;
+  color:var(--dim);
+  background:rgba(255,255,255,.015);
+}
+.statusbar .hint{color:var(--faint)}
+.errRibbon{
+  color:var(--red);
+  border:1px solid rgba(255,107,107,.4);
+  background:var(--red-soft);
+  padding:2px 10px;
+  border-radius:6px;
+  animation:retIn .3s ease both;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:1180px){
+  .stage{grid-template-columns:minmax(300px,360px) minmax(0,1fr)}
+  .panel.returns{grid-column:1 / -1;min-height:220px}
+  .wrap{height:auto;min-height:100vh}
+  .window{height:auto}
+}
+@media (max-height:820px){
+  .wrap{height:auto;min-height:100vh}
+  .window{height:auto}
+  .tower{min-height:300px}
+}
+@media (max-width:860px){
+  .wrap{padding:12px}
+  .stage{grid-template-columns:1fr;gap:10px}
+  .panel.returns{grid-column:auto}
+  .panel.source{order:2}
+  .panel.stack{order:1}
+  .panel.returns{order:3}
+  .tower{min-height:300px}
+  .crumb{display:none}
+  .counters{margin-left:0;flex-basis:100%}
+  .frame .addr{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="window" id="win">
+
+    <div class="titlebar">
+      <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+      <div class="brand">递归一生</div>
+      <div class="crumb"><b>~/life/life.js</b> · 一次函数调用，就是一生</div>
+      <div class="tag">1024 · 程序员节</div>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn primary" id="btnRun"><span class="ic">▶</span>运行 life(0)</button>
+      <button class="btn" id="btnStep"><span class="ic">⤵</span>单步</button>
+      <button class="btn toggle" id="btnToggle"><span class="ic">⊘</span>移除终止条件</button>
+      <button class="btn" id="btnReset"><span class="ic">↺</span>重置</button>
+      <div class="counters">
+        <span><i>栈深度</i><b id="cDepth">0</b></span>
+        <span><i>栈内存</i><b id="cMem">0 KB</b></span>
+      </div>
+    </div>
+
+    <div class="stage">
+
+      <section class="panel source" aria-label="源代码">
+        <div class="phead"><span>SOURCE</span><em>life.js</em></div>
+        <div class="pbody nopad">
+          <div class="code" id="code">
+            <div class="ln" data-line="1"><span class="no">1</span><span class="code"><span class="k">function</span> <span class="fn">life</span>(age) {</span></div>
+            <div class="ln" data-line="2"><span class="no">2</span><span class="code">  <span class="k">if</span> (age &gt;= <span class="n">80</span>)</span></div>
+            <div class="ln" data-line="3"><span class="no">3</span><span class="code">    <span class="k">return</span> [<span class="n">"把时间还给时间"</span>]; <span class="c">// 终止条件</span></span></div>
+            <div class="ln" data-line="4"><span class="no">4</span><span class="code"> </span></div>
+            <div class="ln" data-line="5"><span class="no">5</span><span class="code">  <span class="k">new</span> <span class="fn">Frame</span>(age); <span class="c">// 压栈 · 1 KB</span></span></div>
+            <div class="ln" data-line="6"><span class="no">6</span><span class="code">  <span class="k">const</span> rest = <span class="fn">life</span>(<span class="fn">next</span>(age)); <span class="c">// 下一段</span></span></div>
+            <div class="ln" data-line="7"><span class="no">7</span><span class="code">  <span class="k">return</span> [me(age), ...rest]; <span class="c">// 返回这一程</span></span></div>
+            <div class="ln" data-line="8"><span class="no">8</span><span class="code">}</span></div>
+            <div class="ln" data-line="9"><span class="no">9</span><span class="code"> </span></div>
+            <div class="ln" data-line="10"><span class="no">10</span><span class="code"><span class="fn">life</span>(<span class="n">0</span>); <span class="c">// 从这里开始</span></span></div>
+          </div>
+          <div class="codeNote">
+            一帧栈空间约 <b>1 KB</b>，默认栈约 <b>8 MB</b>——<br>
+            所以真实引擎里，递归深度大约是 <b>8192</b> 帧。
+          </div>
+        </div>
+      </section>
+
+      <section class="panel stack" aria-label="调用栈">
+        <div class="phead"><span>CALL STACK</span><em id="stackHint">等待调用</em></div>
+        <div class="pbody nopad">
+          <div class="tower" id="tower">
+            <div class="baseline">栈底 · life(0)</div>
+            <div class="sp" id="sp" style="display:none"><span class="bar"></span>SP · 栈顶</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel returns" aria-label="返回值">
+        <div class="phead"><span>RETURN VALUES</span><em id="retHint">返回栈</em></div>
+        <div class="pbody">
+          <div class="rets" id="rets">
+            <div class="empty">每一次 <b style="color:var(--green)">return</b> 都会落回这里。<br>当调用栈开始回退，这一生会被倒着读一遍。</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="statusbar">
+      <span id="statusText">就绪 · life(0) 尚未调用</span>
+      <span id="statusRight" class="hint">1 帧 ≈ 1 KB · 真实 V8 引擎约 8192 帧</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- 人生的每一段 ---------- */
+  var AGES = [0, 6, 14, 22, 30, 45, 70];
+  var STAGE_NAME = {0:"出生", 6:"童年", 14:"少年", 22:"青年", 30:"而立", 45:"中年", 70:"老年"};
+  var LEGACY = {
+    0:"你好，世界。",
+    6:"世界原来是甜的。",
+    14:"第一次相信不可能的事。",
+    22:"走了很远，才知道要去哪。",
+    30:"把热爱过成谋生。",
+    45:"学会取舍，也学会承担。",
+    70:"慢下来，也是一种抵达。"
+  };
+  var BASE_RET = "把时间还给时间。";
+
+  var MAX_VISIBLE = 9;          // 栈面板能同时显示的帧数
+  var OVERFLOW_PUSHES = 20;     // 无终止条件时压入的帧数
+  var ADDR_TOP = 0x7ffe4000;    // 栈顶地址
+  var ADDR_STEP = 0x400;        // 每帧 1024 字节
+
+  /* ---------- DOM ---------- */
+  var tower = document.getElementById("tower");
+  var sp = document.getElementById("sp");
+  var rets = document.getElementById("rets");
+  var retBody = document.querySelector(".panel.returns .pbody");
+  var codeEl = document.getElementById("code");
+  var statusText = document.getElementById("statusText");
+  var statusRight = document.getElementById("statusRight");
+  var stackHint = document.getElementById("stackHint");
+  var retHint = document.getElementById("retHint");
+  var cDepth = document.getElementById("cDepth");
+  var cMem = document.getElementById("cMem");
+  var btnRun = document.getElementById("btnRun");
+  var btnStep = document.getElementById("btnStep");
+  var btnToggle = document.getElementById("btnToggle");
+  var btnReset = document.getElementById("btnReset");
+
+  /* ---------- state ---------- */
+  var frames = [];        // 自栈底到栈顶：{age, el}
+  var totalPushed = 0;    // 含已被挤出的帧
+  var queue = [];
+  var qi = 0;
+  var timer = null;
+  var playing = false;
+  var mode = "normal";    // normal | nocase
+  var poem = [];
+
+  /* ---------- helpers ---------- */
+  function hex(n){ return "0x" + n.toString(16); }
+
+  function setActiveLines(lines){
+    var all = codeEl.querySelectorAll(".ln");
+    for (var i = 0; i < all.length; i++) all[i].classList.remove("active");
+    for (var j = 0; j < lines.length; j++){
+      var el = codeEl.querySelector('.ln[data-line="' + lines[j] + '"]');
+      if (el) el.classList.add("active");
+    }
+  }
+
+  function setStatus(text){ statusText.textContent = text; }
+
+  function updateCounters(){
+    cDepth.textContent = String(totalPushed);
+    cMem.textContent = totalPushed + " KB";
+  }
+
+  function updateSp(){
+    if (frames.length === 0){ sp.style.display = "none"; }
+    else { sp.style.display = "flex"; }
+  }
+
+  function clearStage(){
+    var kids = tower.querySelectorAll(".frame");
+    for (var i = 0; i < kids.length; i++) kids[i].remove();
+    frames = [];
+    totalPushed = 0;
+    poem = [];
+    rets.innerHTML = '<div class="empty">每一次 <b style="color:var(--green)">return</b> 都会落回这里。<br>当调用栈开始回退，这一生会被倒着读一遍。</div>';
+    setActiveLines([]);
+    updateCounters();
+    updateSp();
+    tower.classList.remove("shake");
+    stackHint.textContent = "等待调用";
+    retHint.textContent = "返回栈";
+    statusRight.className = "hint";
+    statusRight.textContent = "1 帧 ≈ 1 KB · 真实 V8 引擎约 8192 帧";
+  }
+
+  /* ---------- frame ops ---------- */
+  function makeFrame(age){
+    var el = document.createElement("div");
+    el.className = "frame is-enter";
+    var addr = ADDR_TOP - totalPushed * ADDR_STEP;
+
+    if (age === null){
+      var n = 86 + totalPushed * 6;
+      el.classList.add("is-danger");
+      el.innerHTML =
+        '<span class="left"><span class="fname">life(<u>' + n + '</u>)</span>' +
+        '<span class="stage">拒绝终止</span></span>' +
+        '<span class="right"><span class="addr">' + hex(addr) + '</span>' +
+        '<span class="kb">1 KB</span></span>';
+    } else {
+      el.innerHTML =
+        '<span class="left"><span class="fname">life(<u>' + age + '</u>)</span>' +
+        '<span class="stage">' + STAGE_NAME[age] + '</span></span>' +
+        '<span class="right"><span class="addr">' + hex(addr) + '</span>' +
+        '<span class="kb">1 KB</span></span>';
+    }
+    return el;
+  }
+
+  function pushFrame(age){
+    var el = makeFrame(age);
+    tower.insertBefore(el, sp);
+    frames.push({age:age, el:el});
+    totalPushed++;
+    updateCounters();
+    updateSp();
+    return el;
+  }
+
+  function evictOldest(){
+    var f = frames.shift();
+    if (!f) return;
+    f.el.classList.remove("is-active", "is-base");
+    f.el.classList.add("is-evict");
+    (function(el){ setTimeout(function(){ el.remove(); }, 400); })(f.el);
+  }
+
+  function markActive(){
+    for (var i = 0; i < frames.length; i++) frames[i].el.classList.remove("is-active", "is-base");
+    if (frames.length) frames[frames.length - 1].el.classList.add("is-active");
+  }
+
+  /* ---------- returns ---------- */
+  function addReturn(age, isBase){
+    var head = isBase
+      ? '<div class="rhead"><b>终止条件</b> · age &gt;= 80</div>'
+      : '<div class="rhead"><b>' + STAGE_NAME[age] + '</b> · life(' + age + ') · return</div>';
+    var body = isBase ? BASE_RET : LEGACY[age];
+
+    var card = document.createElement("div");
+    card.className = "ret" + (isBase ? " ret-base" : "");
+    card.innerHTML = head + '<div class="rbody">' + body + '</div>';
+
+    var emptyEl = rets.querySelector(".empty");
+    if (emptyEl) emptyEl.remove();
+    rets.appendChild(card);
+
+    if (!isBase) poem.unshift(body); else poem.push(body);
+  }
+
+  function showPoem(){
+    if (rets.querySelector(".poem")) return;
+    var lines = poem.map(function(l){ return '<div class="pline">' + l + '</div>'; }).join("");
+    var box = document.createElement("div");
+    box.className = "poem";
+    box.innerHTML =
+      '<div class="plabel">life(0) ==</div>' +
+      lines +
+      '<div class="retNote">返回顺序是倒着的，我们把这一生正过来读。</div>';
+    rets.appendChild(box);
+    if (retBody) requestAnimationFrame(function(){ retBody.scrollTop = retBody.scrollHeight; });
+  }
+
+  /* ---------- actions ---------- */
+  function actPush(age){
+    pushFrame(age);
+    markActive();
+    setActiveLines([5, 6]);
+    setStatus("调用 life(" + age + ") · 压入一帧，占用 1 KB");
+    stackHint.textContent = "深度 " + totalPushed;
+  }
+
+  function actGPush(){
+    if (frames.length >= MAX_VISIBLE) evictOldest();
+    pushFrame(null);
+    markActive();
+    setActiveLines([5, 6]);
+    setStatus("life 再也停不下来 · 栈深度 " + totalPushed + "，最老的日子被挤出去了");
+    stackHint.textContent = "深度 " + totalPushed;
+  }
+
+  function actBase(){
+    var top = frames[frames.length - 1];
+    if (top){ top.el.classList.remove("is-active"); top.el.classList.add("is-base"); }
+    setActiveLines([2, 3]);
+    addReturn(0, true);
+    setStatus("命中终止条件 · 开始逐帧返回");
+    stackHint.textContent = "深度 " + frames.length + " · 命中终止";
+    retHint.textContent = "倒叙返回";
+  }
+
+  function actPop(){
+    var f = frames.pop();
+    if (!f) return;
+    totalPushed--;
+    f.el.classList.remove("is-active", "is-base");
+    f.el.classList.add("is-pop");
+    (function(el){ setTimeout(function(){ el.remove(); }, 400); })(f.el);
+    markActive();
+    addReturn(f.age, false);
+    updateCounters();
+    updateSp();
+    setActiveLines([7]);
+    setStatus("返回 · 弹出 life(" + f.age + ")，带回「" + LEGACY[f.age] + "」");
+    stackHint.textContent = "深度 " + frames.length;
+  }
+
+  function actDone(){
+    setActiveLines([7]);
+    showPoem();
+    setStatus("life(0) 已返回 · 这一生读完了");
+    stackHint.textContent = "已清空";
+    retHint.textContent = "life(0) 的返回值";
+    statusRight.className = "";
+    statusRight.innerHTML = '栈已归零 · 7 帧，7 KB';
+  }
+
+  function actError(){
+    tower.classList.add("shake");
+    var top = frames[frames.length - 1];
+    if (top) top.el.classList.add("is-danger");
+    setActiveLines([6]);
+    setStatus("没有终止条件的递归，就是没有尽头的一生");
+    stackHint.textContent = "栈溢出";
+    statusRight.className = "errRibbon";
+    statusRight.textContent = "RangeError: Maximum call stack size exceeded";
+    playing = false;
+    updateControls();
+  }
+
+  /* ---------- queue ---------- */
+  function buildNormalQueue(){
+    var ops = [];
+    for (var i = 0; i < AGES.length; i++) ops.push({t:"push", age:AGES[i]});
+    ops.push({t:"base"});
+    for (var j = AGES.length - 1; j >= 0; j--) ops.push({t:"pop"});
+    ops.push({t:"done"});
+    return ops;
+  }
+
+  function buildOverflowQueue(){
+    var ops = [];
+    for (var i = 0; i < OVERFLOW_PUSHES; i++) ops.push({t:"gpush"});
+    ops.push({t:"error"});
+    return ops;
+  }
+
+  function doStep(op){
+    switch(op.t){
+      case "push":  actPush(op.age); break;
+      case "gpush": actGPush(); break;
+      case "base":  actBase(); break;
+      case "pop":   actPop(); break;
+      case "done":  actDone(); break;
+      case "error": actError(); break;
+    }
+  }
+
+  function stepDelay(){ return mode === "nocase" ? 120 : 640; }
+
+  function scheduleNext(){
+    if (!playing) return;
+    if (qi >= queue.length){ playing = false; updateControls(); return; }
+    timer = setTimeout(function(){
+      if (!playing) return;
+      doStep(queue[qi++]);
+      if (qi >= queue.length) playing = false;
+      updateControls();
+      scheduleNext();
+    }, stepDelay());
+  }
+
+  function play(){
+    pause();
+    clearStage();
+    queue = (mode === "nocase") ? buildOverflowQueue() : buildNormalQueue();
+    qi = 0;
+    playing = true;
+    updateControls();
+    scheduleNext();
+  }
+
+  function pause(){
+    playing = false;
+    if (timer) { clearTimeout(timer); timer = null; }
+    updateControls();
+  }
+
+  function singleStep(){
+    if (playing) pause();
+
+    // 第一次单步：准备队列
+    if (queue.length === 0){
+      clearStage();
+      queue = (mode === "nocase") ? buildOverflowQueue() : buildNormalQueue();
+      qi = 0;
+    }
+    if (qi >= queue.length){ return; }
+
+    doStep(queue[qi++]);
+    updateControls();
+  }
+
+  function reset(){
+    pause();
+    queue = [];
+    qi = 0;
+    clearStage();
+    setStatus("就绪 · life(0) 尚未调用");
+    updateControls();
+  }
+
+  function updateControls(){
+    var finished = queue.length > 0 && qi >= queue.length;
+    btnStep.disabled = playing || finished;
+    btnRun.disabled = playing;
+    btnRun.innerHTML = playing
+      ? '<span class="ic">❚❚</span>运行中…'
+      : '<span class="ic">▶</span>运行 life(0)';
+  }
+
+  function setMode(next){
+    mode = next;
+    var condLines = [
+      codeEl.querySelector('.ln[data-line="2"]'),
+      codeEl.querySelector('.ln[data-line="3"]')
+    ];
+    var on = (mode === "nocase");
+    btnToggle.classList.toggle("on", on);
+    btnToggle.innerHTML = '<span class="ic">⊘</span>' + (on ? "已移除终止条件" : "移除终止条件");
+    for (var i = 0; i < condLines.length; i++){
+      if (condLines[i]) condLines[i].classList.toggle("disabled", on);
+    }
+    reset();
+  }
+
+  /* ---------- wiring ---------- */
+  btnRun.addEventListener("click", function(){
+    if (playing) { pause(); return; }
+    // 队列跑到一半 → 继续；否则从头开始
+    if (queue.length > 0 && qi < queue.length){
+      playing = true;
+      updateControls();
+      scheduleNext();
+      return;
+    }
+    play();
+  });
+  btnStep.addEventListener("click", singleStep);
+  btnReset.addEventListener("click", reset);
+  btnToggle.addEventListener("click", function(){
+    setMode(mode === "normal" ? "nocase" : "normal");
+  });
+
+  // 首次进入，高亮起点
+  setActiveLines([10]);
+  updateCounters();
+})();
+</script>
+</body>
+</html>
