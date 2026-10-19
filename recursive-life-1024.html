@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>递归一生 · life() — 1024 程序员节</title>
-<meta name="description" content="人生就是一次函数调用。压栈、递归、命中终止条件、逐帧返回。">
+<title>递归一生 · 人是一切社会关系的总和 — 1024 程序员节</title>
+<meta name="description" content="人的本质不是单个人所固有的抽象物，在其现实性上，它是一切社会关系的总和。异化是关系上的 β₁ 环，卸下即扬弃。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
@@ -436,41 +436,49 @@ body{
     <div class="titlebar">
       <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
       <div class="brand">递归一生</div>
-      <div class="crumb"><b>~/life/life.js</b> · 一次函数调用，就是一生</div>
+      <div class="crumb"><b>~/life/man.js</b> · 递归发生在关系层，不在自我内部</div>
       <div class="tag">1024 · 程序员节</div>
     </div>
 
     <div class="toolbar">
-      <button class="btn primary" id="btnRun"><span class="ic">▶</span>运行 life(0)</button>
+      <button class="btn primary" id="btnRun"><span class="ic">▶</span>运行 人()</button>
       <button class="btn" id="btnStep"><span class="ic">⤵</span>单步</button>
       <button class="btn toggle" id="btnToggle"><span class="ic">⊘</span>移除终止条件</button>
       <button class="btn" id="btnReset"><span class="ic">↺</span>重置</button>
       <div class="counters">
         <span><i>栈深度</i><b id="cDepth">0</b></span>
         <span><i>栈内存</i><b id="cMem">0 KB</b></span>
+        <span><i>异化环</i><b id="cRings">0</b></span>
       </div>
     </div>
 
     <div class="stage">
 
       <section class="panel source" aria-label="源代码">
-        <div class="phead"><span>SOURCE</span><em>life.js</em></div>
+        <div class="phead"><span>SOURCE</span><em>man.js</em></div>
         <div class="pbody nopad">
           <div class="code" id="code">
-            <div class="ln" data-line="1"><span class="no">1</span><span class="code"><span class="k">function</span> <span class="fn">life</span>(age) {</span></div>
-            <div class="ln" data-line="2"><span class="no">2</span><span class="code">  <span class="k">if</span> (age &gt;= <span class="n">80</span>)</span></div>
-            <div class="ln" data-line="3"><span class="no">3</span><span class="code">    <span class="k">return</span> [<span class="n">"把时间还给时间"</span>]; <span class="c">// 终止条件</span></span></div>
-            <div class="ln" data-line="4"><span class="no">4</span><span class="code"> </span></div>
-            <div class="ln" data-line="5"><span class="no">5</span><span class="code">  <span class="k">new</span> <span class="fn">Frame</span>(age); <span class="c">// 压栈 · 1 KB</span></span></div>
-            <div class="ln" data-line="6"><span class="no">6</span><span class="code">  <span class="k">const</span> rest = <span class="fn">life</span>(<span class="fn">next</span>(age)); <span class="c">// 下一段</span></span></div>
-            <div class="ln" data-line="7"><span class="no">7</span><span class="code">  <span class="k">return</span> [me(age), ...rest]; <span class="c">// 返回这一程</span></span></div>
-            <div class="ln" data-line="8"><span class="no">8</span><span class="code">}</span></div>
-            <div class="ln" data-line="9"><span class="no">9</span><span class="code"> </span></div>
-            <div class="ln" data-line="10"><span class="no">10</span><span class="code"><span class="fn">life</span>(<span class="n">0</span>); <span class="c">// 从这里开始</span></span></div>
+            <div class="ln" data-line="1"><span class="no">1</span><span class="code"><span class="c">/* 人的本质不是单个人所固有的抽象物，</span></span></div>
+            <div class="ln" data-line="2"><span class="no">2</span><span class="code"><span class="c">   在其现实性上，它是一切社会关系的总和 */</span></span></div>
+            <div class="ln" data-line="3"><span class="no">3</span><span class="code"> </span></div>
+            <div class="ln" data-line="4"><span class="no">4</span><span class="code"><span class="k">function</span> <span class="fn">人</span>(我, 关系) {</span></div>
+            <div class="ln" data-line="5"><span class="no">5</span><span class="code">  <span class="c">// β₁ 环：异化的四重结构</span></span></div>
+            <div class="ln" data-line="6"><span class="no">6</span><span class="code">  <span class="k">for</span> (<span class="k">const</span> 环 <span class="k">of</span> 关系.环)</span></div>
+            <div class="ln" data-line="7"><span class="no">7</span><span class="code">    <span class="k">if</span> (环.在位) 我 = 环.<span class="fn">作用</span>(我);</span></div>
+            <div class="ln" data-line="8"><span class="no">8</span><span class="code"> </span></div>
+            <div class="ln" data-line="9"><span class="no">9</span><span class="code">  <span class="c">// 终止条件：环都卸下 ⇒ 扬弃异化</span></span></div>
+            <div class="ln" data-line="10"><span class="no">10</span><span class="code">  <span class="k">if</span> (关系.<span class="fn">环数</span>() === <span class="n">0</span>)</span></div>
+            <div class="ln" data-line="11"><span class="no">11</span><span class="code">    <span class="k">return</span> [我, ...一切社会关系的总和];</span></div>
+            <div class="ln" data-line="12"><span class="no">12</span><span class="code"> </span></div>
+            <div class="ln" data-line="13"><span class="no">13</span><span class="code">  <span class="c">// 递归发生在关系层，不在自我内部</span></span></div>
+            <div class="ln" data-line="14"><span class="no">14</span><span class="code">  <span class="k">return</span> <span class="fn">人</span>(我, 关系.<span class="fn">卸下最外层环</span>());</span></div>
+            <div class="ln" data-line="15"><span class="no">15</span><span class="code">}</span></div>
+            <div class="ln" data-line="16"><span class="no">16</span><span class="code"> </span></div>
+            <div class="ln" data-line="17"><span class="no">17</span><span class="code"><span class="fn">人</span>(我, 四重环); <span class="c">// 从这里开始</span></span></div>
           </div>
           <div class="codeNote">
-            一帧栈空间约 <b>1 KB</b>，默认栈约 <b>8 MB</b>——<br>
-            所以真实引擎里，递归深度大约是 <b>8192</b> 帧。
+            异化 = 关系上的 <b>β₁ 环</b>：<b>产品 · 过程 · 类本质 · 人同人</b>——<br>
+            你造的、你做的，都不再属于你。四重环卸下、环数归零，递归才终止：<b>扬弃</b>。
           </div>
         </div>
       </section>
@@ -479,7 +487,7 @@ body{
         <div class="phead"><span>CALL STACK</span><em id="stackHint">等待调用</em></div>
         <div class="pbody nopad">
           <div class="tower" id="tower">
-            <div class="baseline">栈底 · life(0)</div>
+            <div class="baseline">栈底 · 人(我, 四重环)</div>
             <div class="sp" id="sp" style="display:none"><span class="bar"></span>SP · 栈顶</div>
           </div>
         </div>
@@ -489,7 +497,7 @@ body{
         <div class="phead"><span>RETURN VALUES</span><em id="retHint">返回栈</em></div>
         <div class="pbody">
           <div class="rets" id="rets">
-            <div class="empty">每一次 <b style="color:var(--green)">return</b> 都会落回这里。<br>当调用栈开始回退，这一生会被倒着读一遍。</div>
+            <div class="empty">每一次 <b style="color:var(--green)">return</b>，都卸下一重异化。<br>当环数归零，人回到一切社会关系的总和。</div>
           </div>
         </div>
       </section>
@@ -497,8 +505,8 @@ body{
     </div>
 
     <div class="statusbar">
-      <span id="statusText">就绪 · life(0) 尚未调用</span>
-      <span id="statusRight" class="hint">1 帧 ≈ 1 KB · 真实 V8 引擎约 8192 帧</span>
+      <span id="statusText">就绪 · 人(我, 四重环) 尚未调用</span>
+      <span id="statusRight" class="hint">1 帧 ≈ 1 KB · 异化 = β₁ 环 · 卸下即扬弃</span>
     </div>
 
   </div>
